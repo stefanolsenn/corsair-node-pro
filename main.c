@@ -3,7 +3,7 @@
 #include "main.h"
 
 int main() {
-	return open();
+	return listAllDevs();
 }
 
 void printdev(libusb_device *dev) {
@@ -11,7 +11,41 @@ void printdev(libusb_device *dev) {
 	int r = libusb_get_device_descriptor(dev, &desc);
 	printf("Device Class: %d\n", desc.bDeviceClass);
 	printf("VendorID: %d\n", desc.idVendor);
+	printf("VendorID: %X\n", desc.idVendor);
 	printf("ProductID: %d\n", desc.idProduct);
+	printf("ProductID: %X\n", desc.idProduct);
+	
+    	  struct libusb_config_descriptor *config;
+    	libusb_get_config_descriptor(dev, 0, &config);
+    	
+	struct libusb_interface *inter;
+    	struct libusb_interface_descriptor *interdesc;
+    	struct libusb_endpoint_descriptor *epdesc;
+
+    	for(int i=0; i<(int)config->bNumInterfaces; i++) {
+
+        	inter = &config->interface[i];
+
+
+        	for(int j=0; j<inter->num_altsetting; j++) {
+
+            		interdesc = &inter->altsetting[j];
+
+            		printf("InterfaceNumber:%d\n", interdesc->bInterfaceNumber);
+
+            		printf("NumEndpoints:%d\n", interdesc->bNumEndpoints);
+
+            		for(int k=0; k<(int)interdesc->bNumEndpoints; k++) {
+
+                		epdesc = &interdesc->endpoint[k];
+
+                		printf("DescriptorType:%d\n", epdesc->bDescriptorType);
+
+                		printf("EndpointAddress:%d\n", epdesc->bEndpointAddress);
+			}
+		}
+	}
+	libusb_free_config_descriptor(config);
 	printf("--------------------\n");
 
 }
@@ -92,6 +126,4 @@ int open() {
 	libusb_close(dev_handle);
 	libusb_exit(ctx);
 	return 0;
-
-
 }

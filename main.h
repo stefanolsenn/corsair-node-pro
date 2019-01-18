@@ -4,5 +4,5 @@
 int open();
 int listAllDevs();
 void printdev(libusb_device *dev);
-
+char *fillArray(char arr []);
 #endif

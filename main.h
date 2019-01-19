@@ -4,5 +4,6 @@
 int open();
 int listAllDevs();
 void printdev(libusb_device *dev);
-char *fillArray(char arr []);
+unsigned char *getPacket(int count);
+void writeBytes(unsigned char arr[], struct libusb_device_handle *dev_handle);
 #endif

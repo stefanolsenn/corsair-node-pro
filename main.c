@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <libusb-1.0/libusb.h>
 #include "main.h"
 
@@ -8,7 +9,7 @@ int main() {
 
 void printdev(libusb_device *dev) {
     struct libusb_device_descriptor desc;
-    int r = libusb_get_device_descriptor(dev, &desc);
+     libusb_get_device_descriptor(dev, &desc);
     printf("Device Class: %d\n", desc.bDeviceClass);
     printf("VendorID: %d\n", desc.idVendor);
     printf("VendorID: %X\n", desc.idVendor);
@@ -18,9 +19,9 @@ void printdev(libusb_device *dev) {
     struct libusb_config_descriptor *config;
     libusb_get_config_descriptor(dev, 0, &config);
 
-    struct libusb_interface *inter;
-    struct libusb_interface_descriptor *interdesc;
-    struct libusb_endpoint_descriptor *epdesc;
+    const struct libusb_interface *inter;
+    const struct libusb_interface_descriptor *interdesc;
+    const struct libusb_endpoint_descriptor *epdesc;
 
     for (int i = 0; i < (int) config->bNumInterfaces; i++) {
 
@@ -30,6 +31,7 @@ void printdev(libusb_device *dev) {
         for (int j = 0; j < inter->num_altsetting; j++) {
 
             interdesc = &inter->altsetting[j];
+
 
             printf("InterfaceNumber:%d\n", interdesc->bInterfaceNumber);
 
@@ -118,31 +120,39 @@ int open() {
     }
     printf("Interface claimed\n");
 
-   // unsigned char arr[64];
-  /*  for (int i = 0; i < 64; i++) {
-        arr[i] = 0x00;
-    } */
 
-
-
-
-    int k, actual_length;
-    k = libusb_bulk_transfer(dev_handle, (1 | LIBUSB_ENDPOINT_OUT), arr, 64, &actual_length, 0);
-    if (k == 0 && actual_length == 64)
-        printf("64 bytes was written to device\n");
-    else
-        printf("Error writing bytes to device\n");
+    unsigned char *arr = getPacket(64);	
+    writeBytes(arr, dev_handle); 
     // ---------------------------------
     // Release interface, close session
     // ---------------------------------
     libusb_release_interface(dev_handle, 0);
     libusb_close(dev_handle);
     libusb_exit(ctx);
+    free(arr);
     return 0;
 }
 
-char *fillArray(char arr[]) {
-    return NULL;
+unsigned char *getPacket(int count) {
+	unsigned char *arr = malloc(count);
+    	
+	if (!arr)
+		return NULL;
+
+	for (int i = 0; i < count; i++) {
+		arr[i] = 0x00;
+	}
+
+	return arr;	
 }
 
+void writeBytes(unsigned char arr[], struct libusb_device_handle *dev_handle) {
+	int k, actual_length;
+	k = libusb_bulk_transfer(dev_handle, (1 | LIBUSB_ENDPOINT_OUT), arr, 64, &actual_length, 0); // dont hardcore the actual bytes to be written - measure the size of array instead
+
+    	if (k == 0 && actual_length == 64) // same here
+        	printf("64 bytes was written to device\n");
+    	else
+        	printf("Error writing bytes to device\n");
+}
 
